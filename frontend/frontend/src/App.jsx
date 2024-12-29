@@ -5,7 +5,7 @@ import {UserProvider} from './context/userContext'
 
 function App() {
   return (
-    <div className='bg-zinc-900'>
+    <div>
       <Navbar/>
       <UserProvider>
         <AppRoutes/>

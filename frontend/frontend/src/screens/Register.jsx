@@ -24,7 +24,7 @@ const Register = () => {
       return;
     }
 
-    setError(''); // Clear previous errors if validation passes
+    setError(''); 
 
     try {
       const response = await axios.post('/users/register', { email, password });

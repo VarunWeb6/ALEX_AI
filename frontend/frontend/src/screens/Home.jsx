@@ -8,7 +8,7 @@ function Home() {
     const [projectName, setProjectName] = useState('');
     const [loading, setLoading] = useState(false);
     const [popupMessage, setPopupMessage] = useState('');
-    const [project, setProject, ] = useState([])
+    const [project, setProject] = useState([]);  // Make sure this is always initialized as an array
 
     async function createProject(e) {
         e.preventDefault();
@@ -38,13 +38,16 @@ function Home() {
     }
 
     useEffect(() => {
-        axios.get('/projects/all').then((res)=>{
-            console.log(res.data)
-            setProject(res.data.projects)
-        }).catch((err)=>{
-            console.log(err)
-        })
-    }, [])
+        axios.get('/projects/all')
+            .then((res) => {
+                // Assuming the response has a `project` field containing the array of projects
+                setProject(res.data.project || []);  // Ensure we extract the correct array
+            })
+            .catch((err) => {
+                console.log(err);
+                setProject([]);  // Fallback to empty array if error occurs
+            });
+    }, []);
 
     function closePopup() {
         setPopupMessage('');
@@ -61,8 +64,21 @@ function Home() {
                     <i className="ri-link p-2 ml-1"></i>
                 </button>
 
-                
+                {Array.isArray(project) && project.length > 0 ? (
+                    project.map((project) => (
+                        <div key={project._id} className="project p-3 border border-slate-300 rounded-lg shadow-md flex items-center justify-between">
+                            <div>
+                                <p>{project.name}</p>
+                                <p className="text-sm text-gray-500">Users: {project.users.length}</p>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <p>No projects available</p>
+                )}
+
             </div>
+
             <div className="p-1">
                 {isModelOpen && (
                     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
@@ -108,6 +124,7 @@ function Home() {
                         </div>
                     </div>
                 )}
+
                 {popupMessage && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">

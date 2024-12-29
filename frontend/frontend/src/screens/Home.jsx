@@ -54,7 +54,7 @@ function Home() {
     }
 
     return (
-        <main className="p-2">
+        <main className="p-2 bg-zinc-900 h-screen text-white">
             <div className="projects flex gap-4">
                 <button
                     onClick={() => setIsModelOpen(true)}

@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { UserContext } from '../context/userContext';
 import axios from '../config/axios';
+import { useNavigate } from 'react-router-dom';
 
 function Home() {
     const { user } = useContext(UserContext);
@@ -37,6 +38,8 @@ function Home() {
         }
     }
 
+    const navigate = useNavigate();
+
     useEffect(() => {
         axios.get('/projects/all')
             .then((res) => {
@@ -65,18 +68,21 @@ function Home() {
                 </button>
 
                 {Array.isArray(project) && project.length > 0 ? (
-                    project.map((project) => (
-                        <div key={project._id} className="project p-3 border border-slate-300 rounded-lg shadow-md flex items-center justify-between">
-                            <div>
-                                <p>{project.name}</p>
-                                <p className="text-sm text-gray-500">Users: {project.users.length}</p>
-                            </div>
+                project.map((project) => (
+                    <div
+                        key={project._id}
+                        className="project p-3 border border-slate-300 rounded-lg shadow-md flex items-center justify-between"
+                        onClick={() => navigate(`/project`, { state: { project } })}
+                    >
+                        <div>
+                            <p>{project.name}</p>
+                            <p className="text-sm text-gray-500">Users: {project.users.length}</p>
                         </div>
-                    ))
-                ) : (
-                    <p>No projects available</p>
-                )}
-
+                    </div>
+                ))
+            ) : (
+                <p>No projects available</p>
+            )}
             </div>
 
             <div className="p-1">

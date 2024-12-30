@@ -40,31 +40,59 @@ const Project = () => {
 
     const handleUserClick = (user) => {
         setSelectedUsers((prev) => {
-            const isAlreadySelected = prev.some((u) => u.id === user.id);
+            const isAlreadySelected = prev.some((u) => u._id === user._id);
             const updatedUsers = isAlreadySelected
-                ? prev.filter((u) => u.id !== user.id) // Remove user if already selected
+                ? prev.filter((u) => u._id !== user._id) // Remove user if already selected
                 : [...prev, user]; // Add user if not selected
 
-            // Log the project and updated users
+            // Log the current project and updated selected users
             console.log({
-                project,
-                // selectedUsers: updatedUsers,
+                // project,
+                selectedUsers: updatedUsers,
             });
 
             return updatedUsers; // Update state
         });
     };
 
+    // const handleUserClick = (user) => {
+    //     setSelectedUsers((prev) => {
+    //         const isAlreadySelected = prev.some((u) => u._id === user._id);
+    //         const updatedUsers = isAlreadySelected
+    //             ? prev.filter((u) => u._id !== user._id) // Remove user if already selected
+    //             : [...prev, user]; // Add user if not selected
+    
+    //         // Log the _id of each user in the selectedUsers array
+    //         console.log({
+    //             selectedUsers: updatedUsers.map(u => u._id).join(' '), // This will log the _id of each user
+    //         });
+    
+    //         return updatedUsers; // Update state
+    //     });
+    // };
+    
+    function addCollaborators () {
+            axios.put('/projects/add-user',{
+                projectId: location.state.project._id,
+                users: Array.from(selectedUsers, user => user._id)
+            }).then(res => {
+                console.log(res.data)
+                setIsModalOpen(false)
+            }).catch(err => {
+                console.log(err)
+            })
+          }
 
     // Log selected users to console whenever it changes
     // console.log("Selected Users:", selectedUsers);
 
     return (
-        <main className="h-screen w-full flex overflow-hidden">
-            <section className="left relative flex flex-col h-full min-w-[24vw] bg-slate-400">
-                <header className="flex justify-end p-2 px-4 bg-slate-200">
-                    <button onClick={handleAddCollaboratorClick}>
+        <main className="h-screen w-full flex overflow-hidden bg-slate-400">
+            <section className="left relative flex flex-col h-full min-w-[24vw] bg-zinc-600">
+                <header className="flex justify-between items-center p-2 px-4 bg-slate-100 flex gap-10">
+                    <button className='flex gap-2' onClick={handleAddCollaboratorClick}>
                         <i className="ri-add-fill"></i>
+                        <p>Add Collabrators</p>
                     </button>
                     <button
                         onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
@@ -120,19 +148,21 @@ const Project = () => {
             {/* Modal for selecting user */}
             {isModalOpen && (
                 <div className="modal fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-                    <div className="modal-content bg-white p-4 rounded-md shadow-lg w-1/3">
-                        <header className="flex justify-between items-center">
+                    <div className="modal-content bg-white p-4 rounded-md shadow-lg w-1/3 max-h-[90vh] flex flex-col">
+                        {/* Modal Header */}
+                        <header className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Select User</h2>
                             <button onClick={() => setIsModalOpen(false)} className="p-2">
                                 <i className="ri-close-fill"></i>
                             </button>
                         </header>
-                        <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
+
+                        {/* Users List */}
+                        <div className="users-list flex flex-col gap-2 overflow-auto flex-grow">
                             {users.map((user) => (
                                 <div
                                     key={user._id} // Ensure each child has a unique key
-                                    className={`user cursor-pointer hover:bg-slate-200 ${selectedUsers.some((u) => u.id === user._id) ? 'bg-slate-200' : ''
-                                        } p-2 flex gap-2 items-center`}
+                                    className={`user cursor-pointer hover:bg-slate-200 ${selectedUsers.some((u) => u._id === user._id) ? 'bg-slate-200' : ''} p-2 flex gap-2 items-center`}
                                     onClick={() => handleUserClick(user)} // Pass the full user object
                                 >
                                     <div className="aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
@@ -143,14 +173,18 @@ const Project = () => {
                             ))}
                         </div>
 
+
+                        {/* Add Collaborators Button */}
                         <button
-                            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md"
+                        onClick={addCollaborators}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md self-center"
                         >
                             Add Collaborators
                         </button>
                     </div>
                 </div>
             )}
+
         </main>
     );
 };

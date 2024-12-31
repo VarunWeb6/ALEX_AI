@@ -1,64 +1,68 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 import { initializeSocket, sendMessage, recieveMessage, disconnectSocket } from '../config/socket';
 import { UserContext } from '../context/userContext';
+import Markdown from 'markdown-to-jsx';
 
 const Project = () => {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedUsers, setSelectedUsers] = useState([]); // Array to store selected users
-    const [allUsers, setAllUsers] = useState([]); // Array to store all users
-    const [project, setProject] = useState(location.state.project); // Store collaborators' data
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
+    const [project, setProject] = useState(location.state.project);
     const [message, setMessage] = useState('');
     const { user } = useContext(UserContext);
+    const [messages, setMessages] = useState([]);
     const messageBoxRef = useRef(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('token'); // Check for token
+        const token = localStorage.getItem('token');
         if (!token) {
             console.error('Token is missing. Redirecting to login.');
-            // Redirect to login or handle unauthorized state
+            navigate('/login');
             return;
         }
 
-        const socket = initializeSocket(location.state.project._id); // Initialize socket with project ID
+        const socket = initializeSocket(location.state.project._id);
         if (!socket) return;
 
-        // Listen for project messages
         recieveMessage('project-message', (data) => {
             console.log('Message received:', data);
             appendIncomingMessage(data);
         });
 
-        // Fetch all users
         axios.get('/users/all')
             .then((res) => setAllUsers(res.data.users))
             .catch((err) => console.log(err));
 
-        // Fetch project data
         axios.get(`/projects/get-project/${location.state.project._id}`)
             .then((res) => setProject(res.data.project))
             .catch((err) => console.log(err));
 
-        // Cleanup function
         return () => {
             disconnectSocket();
         };
-    }, [location.state.project._id]);
+    }, [location.state.project._id, navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
 
     const handleAddCollaboratorClick = () => {
-        setIsModalOpen(true); // Open the modal when "Add Collaborator" is clicked
+        setIsModalOpen(true);
     };
 
     const handleUserClick = (user) => {
         setSelectedUsers((prev) => {
             const isAlreadySelected = prev.includes(user._id);
             return isAlreadySelected
-                ? prev.filter((id) => id !== user._id) // Remove if already selected
-                : [...prev, user._id]; // Add if not selected
+                ? prev.filter((id) => id !== user._id)
+                : [...prev, user._id];
         });
     };
 
@@ -87,27 +91,17 @@ const Project = () => {
     };
 
     const appendIncomingMessage = (messageObject) => {
-        if (messageBoxRef.current) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('incoming-message', 'max-w-[70%]', 'flex', 'flex-col', 'p-2', 'bg-zinc-900', 'rounded-lg');
-            messageElement.innerHTML = `<small class='opacity-59 text-xs'>${messageObject.sender.email}</small>
-                                        <p class='text-md'>${messageObject.message}</p>`;
-            messageBoxRef.current.appendChild(messageElement);
-            messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-        }
-        scrollToBottom()
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { ...messageObject, side: 'left' }
+        ]);
     };
 
     const appendOutgoingMessage = ({ message, sender }) => {
-        if (messageBoxRef.current) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('outgoing-message', 'max-w-[70%]', 'ml-auto', 'flex', 'flex-col', 'p-2', 'bg-zinc-700', 'rounded-lg');
-            messageElement.innerHTML = `<small class='opacity-59 text-xs'>${sender.email}</small>
-                                        <p class='text-md'>${message}</p>`;
-            messageBoxRef.current.appendChild(messageElement);
-            messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-        }
-        scrollToBottom()
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { message, sender, side: 'right' }
+        ]);
     };
 
     const scrollToBottom = () => {
@@ -116,25 +110,46 @@ const Project = () => {
         }
     };
 
+    const isMarkdown = (text) => {
+        // Simple regex to check if the text contains Markdown syntax (e.g., # for headings, * for lists)
+        const markdownRegex = /[\*\#\-\+\!\[\]]/;
+        return markdownRegex.test(text);
+    };
+
+
     return (
         <main className="h-screen w-full flex overflow-hidden bg-slate-400">
-            <section className="left relative flex flex-col h-full min-w-[24vw] bg-gray-800 text-gray-200">
+            <section className="left relative flex flex-col h-full min-w-[30vw] max-w-[45w] bg-gray-800 text-gray-200">
                 <header className="flex justify-between items-center p-3 px-5 bg-gray-700 shadow-md">
                     <button className="flex gap-2 items-center text-gray-200 hover:text-gray-100 transition" onClick={handleAddCollaboratorClick}>
                         <i className="ri-add-fill text-lg"></i>
                         <p className="font-medium">Add Collaborators</p>
                     </button>
-                    <button
-                        onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-                        className="p-2 rounded-full hover:bg-gray-600 transition"
-                    >
+                    <button onClick={() => setIsSidePanelOpen(!isSidePanelOpen)} className="p-2 rounded-full hover:bg-gray-600 transition">
                         <i className="ri-group-fill text-xl"></i>
                     </button>
                 </header>
 
-                <div className="conversation-area flex-grow flex flex-col overflow-hidden bg-gray-900">
+                <div className="conversation-area flex-grow flex flex-col overflow-hidden min-w-[30vw] max-w-[45w] bg-gray-900 ">
                     <div ref={messageBoxRef} className="message-box flex-grow flex flex-col gap-3 p-4 overflow-y-auto">
-                        {/* Messages will be dynamically added here */}
+                        {messages.map((msg, index) => (
+                            <div key={index} className={`message ${msg.side === 'right' ? 'outgoing-message' : 'incoming-message'} max-w-[70%] flex ${msg.side === 'right' ? 'ml-auto' : ''} flex-col p-2 bg-zinc-700 rounded-lg max-w-[24vw]`}>
+                                <small className='opacity-59 text-xs'>{msg.sender.email}</small>
+                                <p className='text-md'>
+                                    {/* Render Markdown if the message contains Markdown syntax */}
+                                    {msg.message && isMarkdown(msg.message) ? (
+                                        <div className='overflow-auto bg-zinc-800 text-white p-2 rounded-2xl mt-4'>
+                                            <Markdown>{msg.message}</Markdown>
+                                        </div>
+                                    ) : (
+                                        msg.message
+                                    )}
+                                </p>
+                            </div>
+                        ))}
+
+
+
                     </div>
                     <div className="inputfield w-full flex items-center p-3 bg-gray-700 shadow-inner">
                         <input
@@ -144,16 +159,19 @@ const Project = () => {
                             type="text"
                             placeholder="Enter message..."
                         />
-                        <button
-                            onClick={send}
-                            className="ml-3 p-3 text-gray-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 transition"
-                        >
+                        <button onClick={send} className="ml-3 p-2 text-gray-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 transition">
                             <i className="ri-send-plane-fill text-lg"></i>
                         </button>
                     </div>
                 </div>
             </section>
 
+            <button
+                onClick={handleLogout}
+                className="fixed top-4 right-4 p-2 bg-zinc-600 text-white rounded-md hover:bg-zinc-700 focus:ring-2 focus:ring-zinc-300 transition-all"
+            >
+                Logout
+            </button>
 
             {isModalOpen && (
                 <div className="modal fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center transition-opacity duration-300">

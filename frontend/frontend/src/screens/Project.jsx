@@ -5,6 +5,21 @@ import { initializeSocket, sendMessage, recieveMessage, disconnectSocket } from 
 import { UserContext } from '../context/userContext';
 import Markdown from 'markdown-to-jsx';
 
+function SyntaxHighlightedCode(props) {
+    const ref = useRef(null)
+
+    React.useEffect(() => {
+        if (ref.current && props.className?.includes('lang-') && window.hljs) {
+            window.hljs.highlightElement(ref.current)
+
+            // hljs won't reprocess the element unless this attribute is removed
+            ref.current.removeAttribute('data-highlighted')
+        }
+    }, [ props.className, props.children ])
+
+    return <code {...props} ref={ref} />
+}
+
 const Project = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -18,6 +33,27 @@ const Project = () => {
     const { user } = useContext(UserContext);
     const [messages, setMessages] = useState([]);
     const messageBoxRef = useRef(null);
+
+    function WriteAiMessage(message) {
+        const messageObject = JSON.parse(message);
+    
+        // This component specifically renders AI-generated messages with markdown
+        return (
+            <div
+                className="overflow-auto bg-slate-950 text-white rounded-sm p-2"
+            >
+                <Markdown
+                    children={messageObject.text}
+                    options={{
+                        overrides: {
+                            code: SyntaxHighlightedCode,
+                        },
+                    }}
+                />
+            </div>
+        );
+    }
+    
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -91,17 +127,30 @@ const Project = () => {
     };
 
     const appendIncomingMessage = (messageObject) => {
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { ...messageObject, side: 'left' }
-        ]);
+        if (messageObject.sender && messageObject.sender.id === 'ai') {
+            // This block handles AI-generated messages with specific formatting
+            const aiMessageComponent = WriteAiMessage(messageObject.message);
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { ...messageObject, side: 'left', component: aiMessageComponent }
+            ]);
+        } else {
+            // Handle normal incoming messages
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { ...messageObject, side: 'left' }
+            ]);
+        }
+        scrollToBottom();
     };
+    
 
     const appendOutgoingMessage = ({ message, sender }) => {
         setMessages((prevMessages) => [
             ...prevMessages,
             { message, sender, side: 'right' }
         ]);
+        scrollToBottom()
     };
 
     const scrollToBottom = () => {

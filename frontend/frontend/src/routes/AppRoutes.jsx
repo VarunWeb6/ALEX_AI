@@ -4,15 +4,16 @@ import Login from '../screens/Login';
 import Register from '../screens/Register'; // Import Register if it exists
 import Home from '../screens/Home'; // Import Home if it exists
 import Project from '../screens/Project'; // Import Project if it exists
+import UserAuth from '../auth/UserAuth';
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} /> {/* Ensure Home is defined or imported */}
+        <Route path="/" element={<UserAuth><Home /></UserAuth>} /> 
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* Ensure Register is defined or imported */}
-        <Route path='/project' element={<Project />} /> {/* Ensure Project is defined or imported */} 
+        <Route path="/register" element={<Register />} /> 
+        <Route path='/project' element={<UserAuth><Project /></UserAuth>} /> 
       </Routes>
     </BrowserRouter>
   );

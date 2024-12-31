@@ -101,30 +101,38 @@ const Project = () => {
             </section>
 
             {/* Modal for selecting user */}
-            {isModalOpen && (
-    <div className="modal fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-        <div className="modal-content bg-white p-4 rounded-md shadow-lg w-1/3 max-h-[90vh] flex flex-col">
-            <header className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Select User</h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2">
-                    <i className="ri-close-fill"></i>
+{/* Modal for Selecting Users */}
+{isModalOpen && (
+    <div className="modal fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center transition-opacity duration-300">
+        <div className="modal-content bg-white p-6 rounded-lg shadow-xl w-1/3 max-h-[90vh] flex flex-col relative">
+            <header className="flex justify-between items-center pb-4 border-b">
+                <h2 className="text-2xl font-bold text-gray-800">Select User</h2>
+                <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 text-gray-600 hover:text-gray-800 transition-all rounded-full hover:bg-gray-200"
+                >
+                    <i className="ri-close-fill text-2xl"></i>
                 </button>
             </header>
 
             {/* Users List */}
-            <div className="users-list flex flex-col gap-2 overflow-auto flex-grow">
+            <div className="users-list mt-4 flex flex-col gap-3 overflow-auto flex-grow">
                 {allUsers.map((user) => (
                     <div
-                        key={user._id} // Ensure each child has a unique key
-                        className={`user cursor-pointer hover:bg-slate-200 ${
-                            selectedUsers.some((u) => u._id === user._id) ? 'bg-slate-200' : ''
-                        } p-2 flex gap-2 items-center`}
-                        onClick={() => handleUserClick(user)} // Pass the full user object
+                        key={user._id}
+                        className={`user cursor-pointer transition-all p-3 flex gap-3 items-center rounded-lg shadow-md ${
+                            selectedUsers.some((u) => u === user._id)
+                                ? 'bg-blue-100 border border-blue-500'
+                                : 'hover:bg-gray-100'
+                        }`}
+                        onClick={() => handleUserClick(user)}
                     >
-                        <div className="aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
-                            <i className="ri-user-fill absolute"></i>
+                        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-600 text-white">
+                            <i className="ri-user-fill"></i>
                         </div>
-                        <h1 className="font-semibold text-lg">{user.email}</h1>
+                        <h1 className="font-semibold text-gray-700">
+                            {user.email}
+                        </h1>
                     </div>
                 ))}
             </div>
@@ -132,7 +140,7 @@ const Project = () => {
             {/* Add Collaborators Button */}
             <button
                 onClick={addCollaborators}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md self-center transition-all hover:bg-blue-700 focus:bg-blue-800 active:bg-blue-900 shadow-lg"
+                className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md self-center shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 focus:outline-none transition-all"
             >
                 Add Collaborators
             </button>
@@ -140,43 +148,42 @@ const Project = () => {
     </div>
 )}
 
-
-            {/* Side Panel for Group Members */}
-            {isSidePanelOpen && (
+{/* Side Panel for Group Members */}
+{isSidePanelOpen && (
     <div
-        className={`sidePanel w-[24vw] h-full flex flex-col gap-2 bg-slate-50 absolute transition-all duration-500 ${
+        className={`sidePanel w-[24vw] h-full flex flex-col gap-4 bg-white shadow-lg absolute top-0 left-0 transform transition-transform duration-500 ${
             isSidePanelOpen ? 'translate-x-0' : '-translate-x-full'
-        } top-0`}
+        }`}
     >
-        <header className="flex justify-between items-center px-4 p-2 bg-slate-200">
-            <h1 className="font-semibold text-lg">Collaborators</h1>
+        <header className="flex justify-between items-center px-6 py-4 bg-gray-200 border-b">
+            <h1 className="font-bold text-lg text-gray-800">Collaborators</h1>
             <button
-                onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-                className="p-2"
+                onClick={() => setIsSidePanelOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-300 transition-all"
             >
-                <i className="ri-close-fill"></i>
+                <i className="ri-close-fill text-xl text-gray-600"></i>
             </button>
         </header>
-        <div className="users flex flex-col gap-2">
+
+        <div className="users flex flex-col gap-4 px-4">
             {project.users &&
-                project.users.map((user) => {
-                    return (
-                        <div
-                            key={user.email}
-                            className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center"
-                        >
-                            <div className="aspect-square rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
-                                <i className="ri-user-fill absolute"></i>
-                            </div>
-                            <h1 className="font-semibold text-lg">
-                                {user.email}
-                            </h1>
+                project.users.map((user) => (
+                    <div
+                        key={user.email}
+                        className="user flex items-center gap-4 p-3 rounded-lg bg-gray-50 shadow-md hover:shadow-lg hover:bg-gray-100 transition-all"
+                    >
+                        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-600 text-white">
+                            <i className="ri-user-fill"></i>
                         </div>
-                    );
-                })}
+                        <h1 className="text-gray-800 font-semibold">
+                            {user.email}
+                        </h1>
+                    </div>
+                ))}
         </div>
     </div>
 )}
+
 
 
 
